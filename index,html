@@ -1,0 +1,2151 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GROWWIN QUANTUM EMULATOR + SENSOR</title>
+    <style>
+        /* ===== ORIGINAL EMULATOR STYLES (unchanged) ===== */
+        :root {
+            color-scheme: dark;
+            --bg: #0e1117;
+            --panel: #151a23;
+            --panel-2: #1b2230;
+            --text: #eef4ff;
+            --muted: #93a1b7;
+            --line: rgba(255, 255, 255, .12);
+            --accent: #3ddc97;
+            --danger: #ff6b6b;
+            --shadow: 0 18px 48px rgba(0, 0, 0, .32);
+            --gold: #ffea00;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+            background: radial-gradient(circle at 30% 0%, rgba(61, 220, 151, .14), transparent 32%), var(--bg);
+            color: var(--text);
+        }
+
+        button,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .app-shell {
+            width: min(1600px, 100%);
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 16px 18px;
+            background: rgba(21, 26, 35, .92);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 260px;
+        }
+
+        .logo {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #3ddc97, #34b3f1);
+            color: #071014;
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(18px, 3vw, 26px);
+            letter-spacing: 0;
+        }
+
+        .brand p,
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .status-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(100px, 1fr));
+            gap: 10px;
+            flex: 1;
+        }
+
+        .status-item {
+            min-height: 52px;
+            padding: 10px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .status-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .status-item strong {
+            font-size: 15px;
+        }
+
+        .status-item .error {
+            color: var(--danger);
+        }
+
+        .error {
+            color: var(--danger);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr) 360px;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .panel {
+            background: rgba(21, 26, 35, .94);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .panel-header h2,
+        .panel-header h3 {
+            font-size: 15px;
+        }
+
+        .panel-body {
+            padding: 14px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .gate-palette {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .gate-chip {
+            height: 42px;
+            border: 1px solid color-mix(in srgb, var(--gate-color), white 18%);
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--gate-color), #111827 68%);
+            color: white;
+            font-weight: 800;
+        }
+
+        .gate-chip.active {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        .toolbar,
+        .export-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn {
+            min-height: 38px;
+            border: 1px solid var(--line);
+            background: #202839;
+            color: var(--text);
+            border-radius: 8px;
+            padding: 8px 11px;
+            font-weight: 700;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #3ddc97, #34b3f1);
+            color: #071014;
+            border: 0;
+        }
+
+        .btn.danger {
+            background: #3a2028;
+            color: #ffdce1;
+        }
+
+        .btn.gold {
+            background: linear-gradient(135deg, #ffea00, #ffb300);
+            color: #071014;
+            border: 0;
+        }
+
+        .circuit-wrap {
+            overflow: auto;
+            padding: 8px;
+        }
+
+        .circuit-grid {
+            display: grid;
+            gap: 0;
+            min-width: 720px;
+        }
+
+        .qubit-label {
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            font-weight: 800;
+            border-right: 1px solid var(--line);
+        }
+
+        .circuit-cell {
+            position: relative;
+            height: 62px;
+            min-width: 54px;
+            display: grid;
+            place-items: center;
+            border-right: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .wire {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background: rgba(238, 244, 255, .28);
+        }
+
+        .circuit-cell.connector::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(84, 209, 219, .7);
+        }
+
+        .gate-node {
+            position: relative;
+            z-index: 2;
+            width: 38px;
+            height: 38px;
+            border: 0;
+            border-radius: 8px;
+            color: #081014;
+            font-weight: 900;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, .28);
+        }
+
+        .gate-node.multi {
+            border-radius: 50%;
+        }
+
+        .results {
+            display: grid;
+            gap: 16px;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 54px 1fr 70px;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .bar-track {
+            height: 12px;
+            background: #273044;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3ddc97, #34b3f1);
+        }
+
+        .bar-value {
+            color: var(--muted);
+            text-align: right;
+        }
+
+        .amplitude-canvas {
+            width: 100%;
+            height: 180px;
+            display: block;
+            background: #101620;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .table-wrap {
+            max-height: 300px;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            color: var(--muted);
+            position: sticky;
+            top: 0;
+            background: var(--panel);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .stat-pill {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 9px 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #111722;
+            font-size: 13px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #101620;
+            color: var(--text);
+            padding: 10px;
+            line-height: 1.45;
+        }
+
+        textarea.code-input {
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .export-panel {
+            margin-top: 16px;
+        }
+
+        /* ===== SENSOR PANEL STYLES (from second code, adapted) ===== */
+        .sensor-box {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--line);
+        }
+
+        .sensor-box video {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .pin-target {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border: 2px dashed var(--gold);
+            transform: translate(-50%, -50%);
+            border-radius: 5px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #spectrometer {
+            width: 100%;
+            height: 90px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .qubit-card {
+            margin-bottom: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border-left: 5px solid #444;
+            background: #0a0c10;
+            color: var(--text);
+        }
+
+        .qubit-card small {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .qubit-card .big {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .qubit-card .gold {
+            color: var(--gold);
+        }
+
+        #bloch-stage {
+            width: 100%;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #222;
+            padding-top: 14px;
+        }
+
+        #bloch-stage small {
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        #vector-container {
+            width: 160px;
+            height: 160px;
+            perspective: 800px;
+            position: relative;
+        }
+
+        #vector-circle {
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle at 30% 30%, #1a1f29, #000);
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #vector-circle::before,
+        #vector-circle::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            border-radius: 50%;
+        }
+
+        #vector-circle::before {
+            transform: rotateY(90deg);
+        }
+
+        #vector-circle::after {
+            transform: rotateX(90deg);
+        }
+
+        .needle {
+            width: 3px;
+            height: 80px;
+            position: absolute;
+            left: 78.5px;
+            top: 0;
+            transform-origin: bottom;
+            transition: 0.3s;
+            opacity: 0.2;
+            border-radius: 2px;
+        }
+
+        #n-red {
+            background: #ff4b2b;
+        }
+
+        #n-white {
+            background: #ffffff;
+        }
+
+        #n-main {
+            background: var(--gold);
+            width: 4px;
+            opacity: 1;
+            box-shadow: 0 0 20px var(--gold);
+            z-index: 5;
+            transform: translateZ(35px);
+        }
+
+        #q-sym {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 60px;
+            color: rgba(255, 234, 0, 0.7);
+            font-size: 2.2rem;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 6;
+            text-shadow: 0 0 10px #000;
+        }
+
+        .active-row {
+            background: #004466 !important;
+            color: #fff !important;
+            box-shadow: inset 0 0 15px var(--accent);
+        }
+
+        .val-changing {
+            color: var(--gold) !important;
+            text-shadow: 0 0 12px var(--gold);
+            transition: color 0.1s;
+        }
+
+        .truth-table {
+            margin: 16px auto 0;
+            width: 100%;
+            border-collapse: collapse;
+            background: #111;
+            font-size: 13px;
+        }
+
+        .truth-table th,
+        .truth-table td {
+            border: 1px solid #222;
+            padding: 10px 12px;
+            color: var(--text);
+        }
+
+        .truth-table th {
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .truth-table .ev-val {
+            color: var(--gold);
+            font-size: 0.8rem;
+            margin-left: 6px;
+            display: none;
+        }
+
+        .sensor-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .sensor-controls label {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .sensor-controls input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        .sensor-status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #2a2a2a;
+            color: #888;
+        }
+
+        .sensor-status-badge.on {
+            background: #1a4a3a;
+            color: var(--accent);
+        }
+
+        /* RESPONSIVE (unchanged from original) */
+        @media (max-width: 1180px) {
+            .layout {
+                grid-template-columns: 240px minmax(0, 1fr);
+            }
+            .results {
+                grid-column: 1 / -1;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            .app-shell {
+                padding: 10px;
+            }
+            .topbar,
+            .layout,
+            .results {
+                grid-template-columns: 1fr;
+            }
+            .topbar {
+                display: grid;
+            }
+            .status-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .sidebar {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="app-shell">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="brand" aria-label="GrowWin Quantum Emulator">
+                <div class="logo">GW</div>
+                <div>
+                    <h1>GROWWIN QUANTUM EMULATOR</h1>
+                    <p></p>
+                </div>
+            </div>
+            <section class="status-strip" aria-label="Simulation status">
+                <div class="status-item"><span>Status</span><strong id="statusText">Ready</strong></div>
+                <div class="status-item"><span>Execution</span><strong id="timingText">0.000 ms</strong></div>
+                <div class="status-item"><span>Qubits</span><strong id="qCount">2</strong></div>
+                <div class="status-item"><span>Gates</span><strong id="gateCount">0</strong></div>
+            </section>
+        </header>
+
+        <section class="layout">
+            <!-- LEFT SIDEBAR (unchanged) -->
+            <aside class="sidebar">
+                <section class="panel">
+                    <div class="panel-header"><h2>Gate Palette</h2><span class="muted">Drag or click</span></div>
+                    <div class="panel-body">
+                        <div id="gatePalette" class="gate-palette"></div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header"><h2>Controls</h2><span class="muted"><span id="columns">8</span> columns</span></div>
+                    <div class="panel-body toolbar">
+                        <button class="btn" id="addQubit">Add Qubit</button>
+                        <button class="btn" id="removeQubit">Remove Qubit</button>
+                        <button class="btn" id="addColumn">Add Column</button>
+                        <button class="btn primary" id="runCircuit">Run Circuit</button>
+                        <button class="btn" id="measureAll">Measure</button>
+                        <button class="btn" id="randomCircuit">Random</button>
+                        <button class="btn danger" id="resetCircuit">Reset</button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header"><h2>Gate Statistics</h2></div>
+                    <div class="panel-body">
+                        <div id="gateStats" class="stat-grid"></div>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- CENTER (unchanged) -->
+            <section>
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>Quantum Circuit Editor</h2>
+                        <span class="muted">Two-qubit gates: select first qubit, then second qubit in the same column</span>
+                    </div>
+                    <div class="circuit-wrap">
+                        <div id="circuitGrid" class="circuit-grid" aria-label="Quantum circuit grid"></div>
+                    </div>
+                </section>
+
+                <section class="panel export-panel">
+                    <div class="panel-header"><h2>Import / Export</h2></div>
+                    <div class="panel-body">
+                        <div class="export-actions">
+                            <button class="btn" id="exportJson">Export JSON</button>
+                            <button class="btn" id="exportQasm">Export OpenQASM</button>
+                            <button class="btn" id="exportQiskit">Export Qiskit</button>
+                            <button class="btn primary" id="importJson">Import JSON</button>
+                        </div>
+                        <p class="muted" style="margin: 12px 0 8px;">Export output</p>
+                        <textarea id="exportText" spellcheck="false"></textarea>
+                        <p class="muted" style="margin: 12px 0 8px;">Import JSON</p>
+                        <textarea id="importText" spellcheck="false" placeholder='{"numQubits":2,"columns":8,"gates":[{"type":"H","column":0,"targets":[0]}]}'></textarea>
+                    </div>
+                </section>
+
+                <section class="panel export-panel">
+                    <div class="panel-header"><h2>Circuit Code Input</h2><span id="circuitCodeMessage" class="muted">Paste Qiskit or OpenQASM gate lines</span></div>
+                    <div class="panel-body">
+                        <textarea id="circuitCodeInput" class="code-input" spellcheck="false" placeholder="qc.h(0)&#10;qc.x(1)&#10;qc.cx(0,1)&#10;qc.z(0)&#10;qc.swap(0,1)"></textarea>
+                        <div class="export-actions" style="margin-top: 10px;">
+                            <button class="btn" id="buildCircuitFromCode">Build Circuit</button>
+                            <button class="btn primary" id="runImportedCircuit">Run Imported Circuit</button>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- RIGHT: RESULTS + SENSOR -->
+            <section class="results">
+
+                <!-- ===== ORIGINAL EMULATOR PANELS (unchanged) ===== -->
+                <section class="panel">
+                    <div class="panel-header"><h2>Probabilities</h2><span id="measurementText" class="muted">No measurement yet</span></div>
+                    <div class="panel-body"><div id="probabilityChart"></div></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header"><h2>Amplitudes</h2><span class="muted">Magnitude and phase</span></div>
+                    <div class="panel-body"><canvas id="amplitudeCanvas" class="amplitude-canvas"></canvas></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header"><h2>Quantum State</h2></div>
+                    <div class="panel-body table-wrap" id="stateTable"></div>
+                </section>
+
+                <!-- ===== NEW SENSOR PANEL (added, does not modify existing) ===== -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>🔬 Quantum Pin‑Point Sensor</h2>
+                        <span id="sensorStatusBadge" class="sensor-status-badge">⏻ IDLE</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="sensor-box">
+                            <video id="video" autoplay playsinline muted></video>
+                            <div class="pin-target"></div>
+                            <canvas id="canvas" width="540" height="405" style="display:none;"></canvas>
+                        </div>
+                        <canvas id="spectrometer"></canvas>
+
+                        <div class="sensor-controls">
+                            <label>SENSITIVITY</label>
+                            <input type="range" id="sens" min="30" max="240" value="110">
+                            <button class="btn primary" id="sensorStartBtn" style="padding:4px 14px;">START</button>
+                            <button class="btn danger" id="sensorStopBtn" style="padding:4px 14px;">STOP</button>
+                        </div>
+
+                        <div class="qubit-card" style="border-left-color:var(--accent);">
+                            <small>SYSTEM STATUS</small>
+                            <div id="q-status" style="font-size:1.2rem;margin-top:4px;font-weight:700;">IDLE</div>
+                        </div>
+
+                        <div class="qubit-card" style="border-left-color:#00aaff;">
+                            <small>HARMONIC FREQUENCY</small>
+                            <div id="hz-text" style="font-size:1.4rem;color:var(--gold);">0 Hz</div>
+                            <div id="detect-text" style="font-size:0.8rem;color:#00aaff;">Scanning for Quantum Gates…</div>
+                        </div>
+
+                        <div id="bloch-stage">
+                            <small>3D BLOCH SPHERE — SENSOR STATE</small>
+                            <div id="vector-container">
+                                <div id="vector-circle">
+                                    <div id="q-sym"></div>
+                                    <div id="n-white" class="needle"></div>
+                                    <div id="n-red" class="needle" style="transform:rotate(180deg)"></div>
+                                    <div id="n-main" class="needle"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Truth Table (sensor detection) -->
+                        <table class="truth-table" id="t-table">
+                            <thead>
+                                <tr>
+                                    <th>DETECTION</th>
+                                    <th>Frequency (THz)</th>
+                                    <th>Energy State (eV)</th>
+                                    <th>QUANTUM STATE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="row-red">
+                                    <td>Red Signal</td>
+                                    <td><span id="f-red">0</span></td>
+                                    <td>Low Energy State <span id="ev-red" class="ev-val">(1.95eV)</span></td>
+                                    <td style="font-size:1.2rem;font-weight:bold;">|0⟩</td>
+                                </tr>
+                                <tr id="row-white">
+                                    <td>White Signal</td>
+                                    <td><span id="f-white">0</span></td>
+                                    <td>High Energy State <span id="ev-white" class="ev-val">(2.75eV)</span></td>
+                                    <td style="font-size:1.2rem;font-weight:bold;">|1⟩</td>
+                                </tr>
+                                <tr id="row-super">
+                                    <td>Dual Signal</td>
+                                    <td><span id="f-super">0</span></td>
+                                    <td>Superposition State <span id="ev-super" class="ev-val">(1.95eV - 2.75eV)</span></td>
+                                    <td style="font-size:1.2rem;font-weight:bold;">|ψ⟩</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </section>
+        </section>
+
+    </main>
+
+    <!-- ============================================================ -->
+    <!-- 1. QUANTUM EMULATOR CORE (EXACTLY AS PROVIDED, UNCHANGED)     -->
+    <!-- ============================================================ -->
+    <script>
+        // ---- START OF ORIGINAL EMULATOR CODE (unchanged) ----
+        class Complex {
+            constructor(re = 0, im = 0) {
+                this.re = Number(re) || 0;
+                this.im = Number(im) || 0;
+            }
+
+            static from(value) {
+                return value instanceof Complex ? value : new Complex(value, 0);
+            }
+
+            static zero() {
+                return new Complex(0, 0);
+            }
+
+            static one() {
+                return new Complex(1, 0);
+            }
+
+            clone() {
+                return new Complex(this.re, this.im);
+            }
+
+            add(other) {
+                other = Complex.from(other);
+                return new Complex(this.re + other.re, this.im + other.im);
+            }
+
+            sub(other) {
+                other = Complex.from(other);
+                return new Complex(this.re - other.re, this.im - other.im);
+            }
+
+            mul(other) {
+                other = Complex.from(other);
+                return new Complex(
+                    this.re * other.re - this.im * other.im,
+                    this.re * other.im + this.im * other.re
+                );
+            }
+
+            div(other) {
+                other = Complex.from(other);
+                const denom = other.re * other.re + other.im * other.im;
+                if (denom === 0) throw new Error("Complex division by zero");
+                return new Complex(
+                    (this.re * other.re + this.im * other.im) / denom,
+                    (this.im * other.re - this.re * other.im) / denom
+                );
+            }
+
+            scale(factor) {
+                return new Complex(this.re * factor, this.im * factor);
+            }
+
+            conj() {
+                return new Complex(this.re, -this.im);
+            }
+
+            abs2() {
+                return this.re * this.re + this.im * this.im;
+            }
+
+            abs() {
+                return Math.sqrt(this.abs2());
+            }
+
+            phase() {
+                return Math.atan2(this.im, this.re);
+            }
+
+            isNearZero(epsilon = 1e-12) {
+                return Math.abs(this.re) < epsilon && Math.abs(this.im) < epsilon;
+            }
+
+            toJSON() {
+                return { re: this.re, im: this.im };
+            }
+
+            toString(precision = 4) {
+                const clean = (n) => {
+                    if (Math.abs(n) < 1e-12) n = 0;
+                    return Number(n.toFixed(precision)).toString();
+                };
+                const re = clean(this.re);
+                const im = clean(Math.abs(this.im));
+                if (Math.abs(this.im) < 1e-12) return re;
+                if (Math.abs(this.re) < 1e-12) return `${this.im < 0 ? "-" : ""}${im}i`;
+                return `${re} ${this.im < 0 ? "-" : "+"} ${im}i`;
+            }
+        }
+
+        window.Complex = Complex;
+
+
+        class Matrix {
+            constructor(rows) {
+                if (!Array.isArray(rows) || rows.length === 0) throw new Error("Matrix requires rows");
+                const width = rows[0].length;
+                if (!width || rows.some((row) => row.length !== width)) throw new Error("Matrix rows must be rectangular");
+                this.rows = rows.map((row) => row.map((value) => Complex.from(value)));
+                this.height = rows.length;
+                this.width = width;
+            }
+
+            static identity(size) {
+                return new Matrix(Array.from({ length: size }, (_, r) =>
+                    Array.from({ length: size }, (_, c) => new Complex(r === c ? 1 : 0, 0))
+                ));
+            }
+
+            static zeros(height, width) {
+                return new Matrix(Array.from({ length: height }, () =>
+                    Array.from({ length: width }, () => Complex.zero())
+                ));
+            }
+
+            multiply(other) {
+                if (this.width !== other.height) throw new Error("Matrix dimensions do not match");
+                const output = [];
+                for (let r = 0; r < this.height; r++) {
+                    const row = [];
+                    for (let c = 0; c < other.width; c++) {
+                        let sum = Complex.zero();
+                        for (let k = 0; k < this.width; k++) {
+                            sum = sum.add(this.rows[r][k].mul(other.rows[k][c]));
+                        }
+                        row.push(sum);
+                    }
+                    output.push(row);
+                }
+                return new Matrix(output);
+            }
+
+            multiplyVector(vector) {
+                if (this.width !== vector.length) throw new Error("Matrix and vector dimensions do not match");
+                const output = [];
+                for (let r = 0; r < this.height; r++) {
+                    let sum = Complex.zero();
+                    for (let c = 0; c < this.width; c++) sum = sum.add(this.rows[r][c].mul(vector[c]));
+                    output.push(sum);
+                }
+                return output;
+            }
+
+            tensor(other) {
+                const rows = [];
+                for (let ar = 0; ar < this.height; ar++) {
+                    for (let br = 0; br < other.height; br++) {
+                        const row = [];
+                        for (let ac = 0; ac < this.width; ac++) {
+                            for (let bc = 0; bc < other.width; bc++) {
+                                row.push(this.rows[ar][ac].mul(other.rows[br][bc]));
+                            }
+                        }
+                        rows.push(row);
+                    }
+                }
+                return new Matrix(rows);
+            }
+        }
+
+        window.Matrix = Matrix;
+
+
+        const SQRT1_2 = 1 / Math.sqrt(2);
+
+        const GateLibrary = {
+            X: {
+                name: "X",
+                arity: 1,
+                color: "#3ddc97",
+                matrix: new Matrix([
+                    [0, 1],
+                    [1, 0]
+                ]),
+                qasm: (targets) => `x q[${targets[0]}];`,
+                qiskit: (targets) => `qc.x(${targets[0]})`
+            },
+            Y: {
+                name: "Y",
+                arity: 1,
+                color: "#34b3f1",
+                matrix: new Matrix([
+                    [0, new Complex(0, -1)],
+                    [new Complex(0, 1), 0]
+                ]),
+                qasm: (targets) => `y q[${targets[0]}];`,
+                qiskit: (targets) => `qc.y(${targets[0]})`
+            },
+            Z: {
+                name: "Z",
+                arity: 1,
+                color: "#ffcc4d",
+                matrix: new Matrix([
+                    [1, 0],
+                    [0, -1]
+                ]),
+                qasm: (targets) => `z q[${targets[0]}];`,
+                qiskit: (targets) => `qc.z(${targets[0]})`
+            },
+            H: {
+                name: "H",
+                arity: 1,
+                color: "#ff7a90",
+                matrix: new Matrix([
+                    [SQRT1_2, SQRT1_2],
+                    [SQRT1_2, -SQRT1_2]
+                ]),
+                qasm: (targets) => `h q[${targets[0]}];`,
+                qiskit: (targets) => `qc.h(${targets[0]})`
+            },
+            S: {
+                name: "S",
+                arity: 1,
+                color: "#b88cff",
+                matrix: new Matrix([
+                    [1, 0],
+                    [0, new Complex(0, 1)]
+                ]),
+                qasm: (targets) => `s q[${targets[0]}];`,
+                qiskit: (targets) => `qc.s(${targets[0]})`
+            },
+            T: {
+                name: "T",
+                arity: 1,
+                color: "#fb9f3d",
+                matrix: new Matrix([
+                    [1, 0],
+                    [0, new Complex(Math.SQRT1_2, Math.SQRT1_2)]
+                ]),
+                qasm: (targets) => `t q[${targets[0]}];`,
+                qiskit: (targets) => `qc.t(${targets[0]})`
+            },
+            CNOT: {
+                name: "CNOT",
+                arity: 2,
+                color: "#54d1db",
+                qasm: (targets) => `cx q[${targets[0]}], q[${targets[1]}];`,
+                qiskit: (targets) => `qc.cx(${targets[0]}, ${targets[1]})`
+            },
+            SWAP: {
+                name: "SWAP",
+                arity: 2,
+                color: "#f472b6",
+                qasm: (targets) => `swap q[${targets[0]}], q[${targets[1]}];`,
+                qiskit: (targets) => `qc.swap(${targets[0]}, ${targets[1]})`
+            }
+        };
+
+        window.GateLibrary = GateLibrary;
+
+
+        class Measurement {
+            static measure(state, qubit = null) {
+                if (qubit === null || qubit === undefined) return this.measureAll(state);
+                if (qubit < 0 || qubit >= state.numQubits) throw new Error("Measurement qubit out of range");
+                const mask = 1 << qubit;
+                const p1 = state.amplitudes.reduce((sum, amp, index) => sum + ((index & mask) ? amp.abs2() : 0), 0);
+                const outcome = Math.random() < p1 ? 1 : 0;
+                const keepProb = outcome ? p1 : 1 - p1;
+                const scale = keepProb > 0 ? 1 / Math.sqrt(keepProb) : 0;
+                state.amplitudes = state.amplitudes.map((amp, index) => {
+                    const bit = (index & mask) ? 1 : 0;
+                    return bit === outcome ? amp.scale(scale) : Complex.zero();
+                });
+                return { type: "qubit", qubit, outcome, probability: keepProb };
+            }
+
+            static measureAll(state) {
+                const probabilities = state.probabilities();
+                let roll = Math.random();
+                let chosen = probabilities[probabilities.length - 1];
+                for (const item of probabilities) {
+                    roll -= item.probability;
+                    if (roll <= 0) {
+                        chosen = item;
+                        break;
+                    }
+                }
+                state.amplitudes = state.amplitudes.map((_, index) => new Complex(index === chosen.index ? 1 : 0, 0));
+                return {
+                    type: "all",
+                    index: chosen.index,
+                    bitstring: chosen.index.toString(2).padStart(state.numQubits, "0"),
+                    probability: chosen.probability
+                };
+            }
+        }
+
+        window.Measurement = Measurement;
+
+
+        class QuantumState {
+            constructor(numQubits) {
+                if (numQubits < 1 || numQubits > 8) throw new Error("QuantumState supports 1 to 8 qubits");
+                this.numQubits = numQubits;
+                this.size = 1 << numQubits;
+                this.amplitudes = Array.from({ length: this.size }, (_, i) => new Complex(i === 0 ? 1 : 0, 0));
+            }
+
+            clone() {
+                const copy = new QuantumState(this.numQubits);
+                copy.amplitudes = this.amplitudes.map((amp) => amp.clone());
+                return copy;
+            }
+
+            basisLabel(index) {
+                return `|${index.toString(2).padStart(this.numQubits, "0")}>`;
+            }
+
+            probabilities() {
+                return this.amplitudes.map((amp, index) => ({
+                    index,
+                    label: this.basisLabel(index),
+                    probability: amp.abs2(),
+                    amplitude: amp
+                }));
+            }
+
+            normalize() {
+                const norm = Math.sqrt(this.amplitudes.reduce((sum, amp) => sum + amp.abs2(), 0));
+                if (norm === 0) throw new Error("Cannot normalize a zero state");
+                this.amplitudes = this.amplitudes.map((amp) => amp.scale(1 / norm));
+            }
+
+            applySingleQubitGate(matrix, target) {
+                const mask = 1 << target;
+                const next = this.amplitudes.map((amp) => amp.clone());
+                for (let i = 0; i < this.size; i++) {
+                    if ((i & mask) !== 0) continue;
+                    const j = i | mask;
+                    const a0 = this.amplitudes[i];
+                    const a1 = this.amplitudes[j];
+                    next[i] = matrix.rows[0][0].mul(a0).add(matrix.rows[0][1].mul(a1));
+                    next[j] = matrix.rows[1][0].mul(a0).add(matrix.rows[1][1].mul(a1));
+                }
+                this.amplitudes = next;
+            }
+
+            applyCNOT(control, target) {
+                if (control === target) throw new Error("CNOT control and target must differ");
+                const cMask = 1 << control;
+                const tMask = 1 << target;
+                const next = this.amplitudes.map((amp) => amp.clone());
+                for (let i = 0; i < this.size; i++) {
+                    if ((i & cMask) && !(i & tMask)) {
+                        const j = i | tMask;
+                        next[i] = this.amplitudes[j].clone();
+                        next[j] = this.amplitudes[i].clone();
+                    }
+                }
+                this.amplitudes = next;
+            }
+
+            applySWAP(a, b) {
+                if (a === b) throw new Error("SWAP targets must differ");
+                const aMask = 1 << a;
+                const bMask = 1 << b;
+                const next = this.amplitudes.map((amp) => amp.clone());
+                for (let i = 0; i < this.size; i++) {
+                    const abit = Boolean(i & aMask);
+                    const bbit = Boolean(i & bMask);
+                    if (abit === bbit) continue;
+                    const j = i ^ aMask ^ bMask;
+                    if (i < j) {
+                        next[i] = this.amplitudes[j].clone();
+                        next[j] = this.amplitudes[i].clone();
+                    }
+                }
+                this.amplitudes = next;
+            }
+
+            measure(qubit = null) {
+                return Measurement.measure(this, qubit);
+            }
+
+            // ===== NEW: set state from sensor (added, does not modify existing) =====
+            setSensorState(type) {
+                if (type === '|0⟩') {
+                    this.amplitudes = Array.from({ length: this.size }, (_, i) => new Complex(i === 0 ? 1 : 0, 0));
+                } else if (type === '|1⟩') {
+                    this.amplitudes = Array.from({ length: this.size }, (_, i) => new Complex(i === 1 ? 1 : 0, 0));
+                } else if (type === '|ψ⟩') {
+                    const s = 1 / Math.sqrt(2);
+                    this.amplitudes = Array.from({ length: this.size }, (_, i) => new Complex(i === 0 || i === 1 ? s : 0, 0));
+                } else {
+                    // IDLE → reset to |0⟩
+                    this.amplitudes = Array.from({ length: this.size }, (_, i) => new Complex(i === 0 ? 1 : 0, 0));
+                }
+                this.normalize();
+            }
+        }
+
+        window.QuantumState = QuantumState;
+
+
+        class Circuit {
+            constructor(numQubits = 2, columns = 8) {
+                this.numQubits = numQubits;
+                this.columns = columns;
+                this.gates = [];
+            }
+
+            validateQubit(qubit) {
+                if (!Number.isInteger(qubit) || qubit < 0 || qubit >= this.numQubits) {
+                    throw new Error(`Qubit ${qubit} is out of range`);
+                }
+            }
+
+            addQubit() {
+                if (this.numQubits >= 8) throw new Error("Maximum of 8 qubits reached");
+                this.numQubits++;
+            }
+
+            removeQubit() {
+                if (this.numQubits <= 1) throw new Error("At least one qubit is required");
+                const removed = this.numQubits - 1;
+                this.gates = this.gates.filter((gate) => !gate.targets.includes(removed));
+                this.numQubits--;
+            }
+
+            ensureColumn(column) {
+                if (column >= this.columns) this.columns = column + 1;
+            }
+
+            canPlace(type, column, targets) {
+                if (!GateLibrary[type]) throw new Error(`Unknown gate ${type}`);
+                targets.forEach((target) => this.validateQubit(target));
+                if (new Set(targets).size !== targets.length) return false;
+                return !this.gates.some((gate) => gate.column === column && gate.targets.some((target) => targets.includes(target)));
+            }
+
+            addGate(type, column, targets) {
+                if (!GateLibrary[type]) throw new Error(`Unknown gate ${type}`);
+                const required = GateLibrary[type].arity;
+                if (targets.length !== required) throw new Error(`${type} requires ${required} target${required > 1 ? "s" : ""}`);
+                this.ensureColumn(column);
+                if (!this.canPlace(type, column, targets)) throw new Error("Cell already contains a conflicting gate");
+                const gate = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : `gate-${Date.now()}-${Math.random()}`,
+                    type,
+                    column,
+                    targets: targets.slice()
+                };
+                this.gates.push(gate);
+                this.sort();
+                return gate;
+            }
+
+            removeGate(id) {
+                this.gates = this.gates.filter((gate) => gate.id !== id);
+            }
+
+            gateAt(column, qubit) {
+                return this.gates.find((gate) => gate.column === column && gate.targets.includes(qubit));
+            }
+
+            clear() {
+                this.gates = [];
+            }
+
+            sort() {
+                this.gates.sort((a, b) => a.column - b.column || Math.min(...a.targets) - Math.min(...b.targets));
+            }
+
+            stats() {
+                const counts = Object.fromEntries(Object.keys(GateLibrary).map((name) => [name, 0]));
+                this.gates.forEach((gate) => counts[gate.type]++);
+                return counts;
+            }
+
+            toJSON() {
+                return {
+                    app: "GrowWin Quantum Emulator",
+                    version: 1,
+                    numQubits: this.numQubits,
+                    columns: this.columns,
+                    gates: this.gates.map(({ type, column, targets }) => ({ type, column, targets }))
+                };
+            }
+
+            static fromJSON(data) {
+                if (typeof data === "string") data = JSON.parse(data);
+                if (!data || !Number.isInteger(data.numQubits) || !Array.isArray(data.gates)) {
+                    throw new Error("Invalid circuit JSON");
+                }
+                const circuit = new Circuit(data.numQubits, Math.max(1, data.columns || 8));
+                data.gates.forEach((gate) => circuit.addGate(gate.type, gate.column, gate.targets));
+                return circuit;
+            }
+        }
+
+        window.Circuit = Circuit;
+
+
+        class Simulator {
+            static run(circuit) {
+                const started = performance.now();
+                const state = new QuantumState(circuit.numQubits);
+                const gates = circuit.gates.slice().sort((a, b) => a.column - b.column);
+                for (const gate of gates) {
+                    this.applyGate(state, gate);
+                }
+                state.normalize();
+                return {
+                    state,
+                    elapsedMs: performance.now() - started,
+                    gateCount: gates.length,
+                    status: "Simulation complete"
+                };
+            }
+
+            static applyGate(state, gate) {
+                const lib = GateLibrary[gate.type];
+                if (!lib) throw new Error(`Unsupported gate ${gate.type}`);
+                if (lib.arity === 1) {
+                    state.applySingleQubitGate(lib.matrix, gate.targets[0]);
+                    return;
+                }
+                if (gate.type === "CNOT") {
+                    state.applyCNOT(gate.targets[0], gate.targets[1]);
+                    return;
+                }
+                if (gate.type === "SWAP") {
+                    state.applySWAP(gate.targets[0], gate.targets[1]);
+                    return;
+                }
+                throw new Error(`Gate ${gate.type} is not implemented`);
+            }
+        }
+
+        window.Simulator = Simulator;
+
+
+        class Visualization {
+            static renderProbabilityChart(container, probabilities) {
+                container.innerHTML = "";
+                const significant = probabilities.filter((p) => p.probability > 1e-8);
+                const rows = significant.length ? significant : probabilities.slice(0, 8);
+                rows.forEach((item) => {
+                    const row = document.createElement("div");
+                    row.className = "bar-row";
+                    const label = document.createElement("span");
+                    label.className = "bar-label";
+                    label.textContent = item.label;
+                    const track = document.createElement("div");
+                    track.className = "bar-track";
+                    const fill = document.createElement("div");
+                    fill.className = "bar-fill";
+                    fill.style.width = `${Math.max(0.5, item.probability * 100)}%`;
+                    track.appendChild(fill);
+                    const value = document.createElement("span");
+                    value.className = "bar-value";
+                    value.textContent = `${(item.probability * 100).toFixed(2)}%`;
+                    row.append(label, track, value);
+                    container.appendChild(row);
+                });
+            }
+
+            static renderStateTable(container, state) {
+                const probabilities = state.probabilities();
+                container.innerHTML = `
+              <table>
+                <thead><tr><th>Basis</th><th>Amplitude</th><th>|amp|</th><th>Phase</th><th>Probability</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            `;
+                const body = container.querySelector("tbody");
+                probabilities.forEach((item) => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                <td>${item.label}</td>
+                <td>${item.amplitude.toString(5)}</td>
+                <td>${item.amplitude.abs().toFixed(5)}</td>
+                <td>${item.amplitude.phase().toFixed(5)}</td>
+                <td>${(item.probability * 100).toFixed(3)}%</td>
+              `;
+                    body.appendChild(row);
+                });
+            }
+
+            static renderAmplitudeCanvas(canvas, state) {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+                canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+                const ctx = canvas.getContext("2d");
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, rect.width, rect.height);
+                ctx.strokeStyle = "rgba(255,255,255,.12)";
+                ctx.beginPath();
+                ctx.moveTo(0, rect.height / 2);
+                ctx.lineTo(rect.width, rect.height / 2);
+                ctx.stroke();
+                const amps = state.amplitudes;
+                const gap = 4;
+                const width = Math.max(3, (rect.width - gap * (amps.length - 1)) / amps.length);
+                amps.forEach((amp, i) => {
+                    const magnitude = amp.abs();
+                    const phase = amp.phase();
+                    const hue = ((phase + Math.PI) / (2 * Math.PI)) * 320 + 20;
+                    const h = magnitude * (rect.height * 0.45);
+                    const x = i * (width + gap);
+                    ctx.fillStyle = `hsl(${hue}, 76%, 62%)`;
+                    ctx.fillRect(x, rect.height / 2 - h, width, h);
+                    ctx.fillStyle = "rgba(255,255,255,.45)";
+                    ctx.fillRect(x, rect.height / 2, width, Math.max(1, amp.abs2() * rect.height * 0.45));
+                });
+            }
+        }
+
+        window.Visualization = Visualization;
+
+
+        class CircuitExport {
+            static json(circuit) {
+                return JSON.stringify(circuit.toJSON(), null, 2);
+            }
+
+            static openQASM(circuit) {
+                const lines = [
+                    "OPENQASM 2.0;",
+                    'include "qelib1.inc";',
+                    `qreg q[${circuit.numQubits}];`,
+                    `creg c[${circuit.numQubits}];`
+                ];
+                circuit.gates.slice().sort((a, b) => a.column - b.column).forEach((gate) => {
+                    lines.push(GateLibrary[gate.type].qasm(gate.targets));
+                });
+                lines.push("measure q -> c;");
+                return lines.join("\n");
+            }
+
+            static qiskit(circuit) {
+                const lines = [
+                    "from qiskit import QuantumCircuit",
+                    "from qiskit.quantum_info import Statevector",
+                    "",
+                    `qc = QuantumCircuit(${circuit.numQubits}, ${circuit.numQubits})`
+                ];
+                circuit.gates.slice().sort((a, b) => a.column - b.column).forEach((gate) => {
+                    lines.push(GateLibrary[gate.type].qiskit(gate.targets));
+                });
+                lines.push("");
+                lines.push("state = Statevector.from_instruction(qc)");
+                lines.push("qc.measure(range(qc.num_qubits), range(qc.num_qubits))");
+                lines.push("print(qc)");
+                lines.push("print(state)");
+                return lines.join("\n");
+            }
+        }
+
+        window.CircuitExport = CircuitExport;
+
+        // ---- END OF ORIGINAL EMULATOR CODE ----
+        // ---- APPLICATION (EMULATOR + SENSOR INTEGRATION) ----
+
+        const app = {
+            circuit: new Circuit(2, 8),
+            selectedGate: "H",
+            pendingTwoQubit: null,
+            lastResult: null,
+            collapsedState: null,
+
+            // ---- SENSOR STATE (new) ----
+            sensorActive: false,
+            sensorAnimId: null,
+            lastBrightness: 0,
+            pulses: 0,
+            lastTime: Date.now(),
+            displayHz: 0,
+            rWave: new Array(100).fill(110),
+            wWave: new Array(100).fill(30),
+            sensorDetectedRed: false,
+            sensorDetectedWhite: false,
+            sensorState: 'IDLE', // '|0⟩', '|1⟩', '|ψ⟩', 'IDLE'
+            sensorLastState: 'IDLE',
+
+            init() {
+                this.bindElements();
+                this.bindEvents();
+                this.renderPalette();
+                this.renderCircuit();
+                this.runCircuit();
+                // init sensor UI
+                this.initSensor();
+            },
+
+            bindElements() {
+                this.el = {
+                    palette: document.getElementById("gatePalette"),
+                    grid: document.getElementById("circuitGrid"),
+                    qCount: document.getElementById("qCount"),
+                    columns: document.getElementById("columns"),
+                    status: document.getElementById("statusText"),
+                    timing: document.getElementById("timingText"),
+                    gateCount: document.getElementById("gateCount"),
+                    probChart: document.getElementById("probabilityChart"),
+                    stateTable: document.getElementById("stateTable"),
+                    ampCanvas: document.getElementById("amplitudeCanvas"),
+                    stats: document.getElementById("gateStats"),
+                    exportText: document.getElementById("exportText"),
+                    importText: document.getElementById("importText"),
+                    circuitCodeInput: document.getElementById("circuitCodeInput"),
+                    circuitCodeMessage: document.getElementById("circuitCodeMessage"),
+                    measurement: document.getElementById("measurementText"),
+                    // Sensor elements
+                    video: document.getElementById("video"),
+                    canvas: document.getElementById("canvas"),
+                    specCanvas: document.getElementById("spectrometer"),
+                    sens: document.getElementById("sens"),
+                    sensorStartBtn: document.getElementById("sensorStartBtn"),
+                    sensorStopBtn: document.getElementById("sensorStopBtn"),
+                    sensorStatusBadge: document.getElementById("sensorStatusBadge"),
+                    qStatus: document.getElementById("q-status"),
+                    hzText: document.getElementById("hz-text"),
+                    detectText: document.getElementById("detect-text"),
+                    qSym: document.getElementById("q-sym"),
+                    nMain: document.getElementById("n-main"),
+                    nRed: document.getElementById("n-red"),
+                    nWhite: document.getElementById("n-white"),
+                    vectorCircle: document.getElementById("vector-circle"),
+                    rowRed: document.getElementById("row-red"),
+                    rowWhite: document.getElementById("row-white"),
+                    rowSuper: document.getElementById("row-super"),
+                    fRed: document.getElementById("f-red"),
+                    fWhite: document.getElementById("f-white"),
+                    fSuper: document.getElementById("f-super"),
+                    evRed: document.getElementById("ev-red"),
+                    evWhite: document.getElementById("ev-white"),
+                    evSuper: document.getElementById("ev-super"),
+                };
+                this.el.specCtx = this.el.specCanvas.getContext('2d');
+                // Set spectrometer size
+                this.el.specCanvas.width = this.el.specCanvas.clientWidth || 340;
+                this.el.specCanvas.height = 90;
+                this.el.ctx = this.el.canvas.getContext('2d');
+            },
+
+            bindEvents() {
+                // ---- ORIGINAL EMULATOR EVENTS (unchanged) ----
+                document.getElementById("addQubit").addEventListener("click", () => this.safe(() => {
+                    if (this.sensorActive) throw new Error("Sensor active: qubit count fixed to 1");
+                    this.circuit.addQubit();
+                    this.renderCircuit();
+                    this.runCircuit();
+                }));
+                document.getElementById("removeQubit").addEventListener("click", () => this.safe(() => {
+                    if (this.sensorActive) throw new Error("Sensor active: qubit count fixed to 1");
+                    this.circuit.removeQubit();
+                    this.renderCircuit();
+                    this.runCircuit();
+                }));
+                document.getElementById("addColumn").addEventListener("click", () => {
+                    this.circuit.columns++;
+                    this.renderCircuit();
+                });
+                document.getElementById("runCircuit").addEventListener("click", () => this.runCircuit());
+                document.getElementById("resetCircuit").addEventListener("click", () => {
+                    this.circuit.clear();
+                    this.collapsedState = null;
+                    this.el.measurement.textContent = "No measurement yet";
+                    this.renderCircuit();
+                    this.runCircuit();
+                });
+                document.getElementById("randomCircuit").addEventListener("click", () => this.randomCircuit());
+                document.getElementById("measureAll").addEventListener("click", () => this.measureAll());
+                document.getElementById("exportJson").addEventListener("click", () => this.el.exportText.value = CircuitExport.json(this.circuit));
+                document.getElementById("exportQasm").addEventListener("click", () => this.el.exportText.value = CircuitExport.openQASM(this.circuit));
+                document.getElementById("exportQiskit").addEventListener("click", () => this.el.exportText.value = CircuitExport.qiskit(this.circuit));
+                document.getElementById("importJson").addEventListener("click", () => this.importJson());
+                document.getElementById("buildCircuitFromCode").addEventListener("click", () => this.buildCircuitFromCode(false));
+                document.getElementById("runImportedCircuit").addEventListener("click", () => this.buildCircuitFromCode(true));
+
+                // ---- SENSOR EVENTS (new) ----
+                this.el.sensorStartBtn.addEventListener("click", () => this.startSensor());
+                this.el.sensorStopBtn.addEventListener("click", () => this.stopSensor());
+
+                window.addEventListener("resize", () => {
+                    if (this.lastResult) Visualization.renderAmplitudeCanvas(this.el.ampCanvas, this.getDisplayedState());
+                    this.resizeSpectrometer();
+                });
+            },
+
+            resizeSpectrometer() {
+                const w = this.el.specCanvas.clientWidth || 340;
+                this.el.specCanvas.width = w;
+                this.el.specCanvas.height = 90;
+            },
+
+            safe(fn) {
+                try {
+                    fn();
+                    this.setStatus("Ready");
+                } catch (error) {
+                    this.setStatus(error.message, true);
+                }
+            },
+
+            setStatus(message, isError = false) {
+                this.el.status.textContent = message;
+                this.el.status.classList.toggle("error", isError);
+            },
+
+            // ---- ORIGINAL EMULATOR METHODS (unchanged) ----
+            renderPalette() {
+                this.el.palette.innerHTML = "";
+                Object.values(GateLibrary).forEach((gate) => {
+                    const button = document.createElement("button");
+                    button.className = "gate-chip";
+                    button.draggable = true;
+                    button.style.setProperty("--gate-color", gate.color);
+                    button.textContent = gate.name;
+                    button.title = `${gate.name} gate`;
+                    button.addEventListener("click", () => {
+                        this.selectedGate = gate.name;
+                        document.querySelectorAll(".gate-chip").forEach((b) => b.classList.remove("active"));
+                        button.classList.add("active");
+                    });
+                    button.addEventListener("dragstart", (event) => event.dataTransfer.setData("text/plain", gate.name));
+                    if (gate.name === this.selectedGate) button.classList.add("active");
+                    this.el.palette.appendChild(button);
+                });
+            },
+
+            renderCircuit() {
+                this.el.qCount.textContent = this.circuit.numQubits;
+                this.el.columns.textContent = this.circuit.columns;
+                this.el.grid.innerHTML = "";
+                this.el.grid.style.gridTemplateColumns = `92px repeat(${this.circuit.columns}, minmax(54px, 1fr))`;
+                for (let q = this.circuit.numQubits - 1; q >= 0; q--) {
+                    const label = document.createElement("div");
+                    label.className = "qubit-label";
+                    label.textContent = `q${q}`;
+                    this.el.grid.appendChild(label);
+                    for (let c = 0; c < this.circuit.columns; c++) {
+                        this.el.grid.appendChild(this.cell(c, q));
+                    }
+                }
+                this.drawConnectors();
+                this.renderStats();
+            },
+
+            cell(column, qubit) {
+                const cell = document.createElement("div");
+                cell.className = "circuit-cell";
+                cell.dataset.column = column;
+                cell.dataset.qubit = qubit;
+                const wire = document.createElement("div");
+                wire.className = "wire";
+                cell.appendChild(wire);
+                const gate = this.circuit.gateAt(column, qubit);
+                if (gate) {
+                    const node = document.createElement("button");
+                    node.className = `gate-node ${gate.targets.length === 2 ? "multi" : ""}`;
+                    node.style.background = GateLibrary[gate.type].color;
+                    node.textContent = gate.type === "CNOT" ? (gate.targets[0] === qubit ? "C" : "X") : gate.type;
+                    node.title = "Click to remove gate";
+                    node.addEventListener("click", (event) => {
+                        event.stopPropagation();
+                        this.circuit.removeGate(gate.id);
+                        this.pendingTwoQubit = null;
+                        this.renderCircuit();
+                        this.runCircuit();
+                    });
+                    cell.appendChild(node);
+                }
+                cell.addEventListener("dragover", (event) => event.preventDefault());
+                cell.addEventListener("drop", (event) => {
+                    event.preventDefault();
+                    this.placeGate(event.dataTransfer.getData("text/plain") || this.selectedGate, column, qubit);
+                });
+                cell.addEventListener("click", () => this.placeGate(this.selectedGate, column, qubit));
+                return cell;
+            },
+
+            drawConnectors() {
+                this.circuit.gates.filter((gate) => gate.targets.length === 2).forEach((gate) => {
+                    const [a, b] = gate.targets;
+                    const top = Math.max(a, b);
+                    const low = Math.min(a, b);
+                    for (let q = low + 1; q < top; q++) {
+                        const cell = this.el.grid.querySelector(`[data-column="${gate.column}"][data-qubit="${q}"]`);
+                        if (cell) cell.classList.add("connector");
+                    }
+                });
+            },
+
+            placeGate(type, column, qubit) {
+                this.safe(() => {
+                    const gate = GateLibrary[type];
+                    if (!gate) throw new Error("Choose a valid gate");
+                    if (gate.arity === 1) {
+                        this.circuit.addGate(type, column, [qubit]);
+                    } else {
+                        if (!this.pendingTwoQubit || this.pendingTwoQubit.type !== type || this.pendingTwoQubit.column !== column) {
+                            this.pendingTwoQubit = { type, column, first: qubit };
+                            this.setStatus(`Select second qubit for ${type} in column ${column}`);
+                            return;
+                        }
+                        this.circuit.addGate(type, column, [this.pendingTwoQubit.first, qubit]);
+                        this.pendingTwoQubit = null;
+                    }
+                    this.collapsedState = null;
+                    this.renderCircuit();
+                    this.runCircuit();
+                });
+            },
+
+            runCircuit() {
+                this.safe(() => {
+                    this.lastResult = Simulator.run(this.circuit);
+                    this.collapsedState = null;
+                    this.el.timing.textContent = `${this.lastResult.elapsedMs.toFixed(3)} ms`;
+                    this.el.gateCount.textContent = this.lastResult.gateCount;
+                    // If sensor is active, apply its state to the simulation result
+                    if (this.sensorActive && this.sensorState !== 'IDLE') {
+                        this.lastResult.state.setSensorState(this.sensorState);
+                    }
+                    this.updateVisuals(this.lastResult.state);
+                    this.setStatus(this.lastResult.status);
+                });
+            },
+
+            getDisplayedState() {
+                return this.collapsedState || (this.lastResult && this.lastResult.state);
+            },
+
+            updateVisuals(state) {
+                Visualization.renderProbabilityChart(this.el.probChart, state.probabilities());
+                Visualization.renderStateTable(this.el.stateTable, state);
+                Visualization.renderAmplitudeCanvas(this.el.ampCanvas, state);
+                this.renderStats();
+            },
+
+            renderStats() {
+                const stats = this.circuit.stats();
+                this.el.stats.innerHTML = "";
+                Object.entries(stats).forEach(([name, count]) => {
+                    const item = document.createElement("div");
+                    item.className = "stat-pill";
+                    item.innerHTML = `<span>${name}</span><strong>${count}</strong>`;
+                    this.el.stats.appendChild(item);
+                });
+            },
+
+            measureAll() {
+                this.safe(() => {
+                    if (!this.lastResult) this.runCircuit();
+                    this.collapsedState = this.lastResult.state.clone();
+                    const result = this.collapsedState.measure();
+                    this.el.measurement.textContent = `${result.bitstring} (${(result.probability * 100).toFixed(3)}%)`;
+                    this.updateVisuals(this.collapsedState);
+                    this.setStatus("Measurement collapsed the state vector");
+                });
+            },
+
+            randomCircuit() {
+                this.safe(() => {
+                    this.circuit.clear();
+                    const names = Object.keys(GateLibrary);
+                    const depth = Math.min(this.circuit.columns, 5 + Math.floor(Math.random() * 5));
+                    for (let c = 0; c < depth; c++) {
+                        const attempts = 1 + Math.floor(Math.random() * this.circuit.numQubits);
+                        for (let a = 0; a < attempts; a++) {
+                            const available = this.circuit.numQubits < 2 ? names.filter((name) => GateLibrary[name].arity === 1) : names;
+                            const type = available[Math.floor(Math.random() * available.length)];
+                            const arity = GateLibrary[type].arity;
+                            const targets = [];
+                            while (targets.length < arity) {
+                                const q = Math.floor(Math.random() * this.circuit.numQubits);
+                                if (!targets.includes(q)) targets.push(q);
+                            }
+                            try { this.circuit.addGate(type, c, targets); } catch (_) {}
+                        }
+                    }
+                    this.renderCircuit();
+                    this.runCircuit();
+                });
+            },
+
+            importJson() {
+                this.safe(() => {
+                    const imported = Circuit.fromJSON(this.el.importText.value);
+                    this.circuit = imported;
+                    this.pendingTwoQubit = null;
+                    this.collapsedState = null;
+                    this.renderCircuit();
+                    this.runCircuit();
+                });
+            },
+
+            parseCircuitCode(text) {
+                const gates = [];
+                const lines = text.split(/\r?\n/);
+                const singleQiskit = /^qc\.(x|y|z|h|s|t)\s*\(\s*([0-7])\s*\)\s*;?$/i;
+                const doubleQiskit = /^qc\.(cx|cnot|swap)\s*\(\s*([0-7])\s*,\s*([0-7])\s*\)\s*;?$/i;
+                const singleQasm = /^(x|y|z|h|s|t)\s+q\s*\[\s*([0-7])\s*\]\s*;?$/i;
+                const doubleQasm = /^(cx|cnot|swap)\s+q\s*\[\s*([0-7])\s*\]\s*,\s*q\s*\[\s*([0-7])\s*\]\s*;?$/i;
+
+                lines.forEach((rawLine, index) => {
+                    const line = rawLine.replace(/\/\/.*$/, "").replace(/#.*$/, "").trim();
+                    if (!line || /^OPENQASM\b/i.test(line) || /^include\b/i.test(line) || /^(qreg|creg)\b/i.test(line) || /^measure\b/i.test(line)) return;
+                    let match = line.match(singleQiskit) || line.match(singleQasm);
+                    if (match) {
+                        gates.push({ type: match[1].toUpperCase(), targets: [Number(match[2])] });
+                        return;
+                    }
+                    match = line.match(doubleQiskit) || line.match(doubleQasm);
+                    if (match) {
+                        const type = match[1].toUpperCase() === "CX" || match[1].toUpperCase() === "CNOT" ? "CNOT" : "SWAP";
+                        const targets = [Number(match[2]), Number(match[3])];
+                        if (targets[0] === targets[1]) throw new Error(`Line ${index + 1}: ${type} requires two different qubits`);
+                        gates.push({ type, targets });
+                        return;
+                    }
+                    throw new Error(`Line ${index + 1}: invalid circuit syntax "${rawLine.trim()}"`);
+                });
+
+                if (!gates.length) throw new Error("Circuit Code Input is empty or contains no supported gates");
+                const maxQubit = Math.max(...gates.flatMap((gate) => gate.targets));
+                if (maxQubit > 7) throw new Error("Only qubits 0 through 7 are supported");
+                return { gates, numQubits: maxQubit + 1 };
+            },
+
+            buildCircuitFromCode(runAfterBuild = false) {
+                this.safe(() => {
+                    const parsed = this.parseCircuitCode(this.el.circuitCodeInput.value);
+                    const importedCircuit = new Circuit(parsed.numQubits, Math.max(8, parsed.gates.length));
+                    parsed.gates.forEach((gate, column) => importedCircuit.addGate(gate.type, column, gate.targets));
+                    this.circuit = importedCircuit;
+                    this.pendingTwoQubit = null;
+                    this.collapsedState = null;
+                    this.el.measurement.textContent = "No measurement yet";
+                    this.renderCircuit();
+                    if (runAfterBuild) this.runCircuit();
+                    this.el.circuitCodeMessage.textContent = runAfterBuild ? "Circuit built and executed" : "Circuit built successfully";
+                    this.el.circuitCodeMessage.classList.remove("error");
+                });
+                if (this.el.status.classList.contains("error")) {
+                    this.el.circuitCodeMessage.textContent = this.el.status.textContent;
+                    this.el.circuitCodeMessage.classList.add("error");
+                }
+            },
+
+            // ============================================================
+            // 3. SENSOR INTEGRATION (from second code, adapted)
+            // ============================================================
+
+            initSensor() {
+                this.resizeSpectrometer();
+                this.el.specCtx.fillStyle = "black";
+                this.el.specCtx.fillRect(0, 0, this.el.specCanvas.width, this.el.specCanvas.height);
+                this.updateSensorUI('IDLE', false, false);
+            },
+
+            startSensor() {
+                if (this.sensorActive) return;
+                // Force circuit to 1 qubit (matching physical hardware)
+                while (this.circuit.numQubits > 1) {
+                    this.circuit.removeQubit();
+                }
+                this.renderCircuit();
+                document.getElementById("addQubit").disabled = true;
+                document.getElementById("removeQubit").disabled = true;
+
+                navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment", frameRate: { ideal: 60 } }
+                }).then(stream => {
+                    this.el.video.srcObject = stream;
+                    this.el.video.play();
+                    this.sensorActive = true;
+                    this.el.sensorStatusBadge.textContent = '● RUNNING';
+                    this.el.sensorStatusBadge.className = 'sensor-status-badge on';
+                    this.el.sensorStartBtn.textContent = 'RUNNING';
+                    this.el.sensorStartBtn.disabled = true;
+                    this.lastTime = Date.now();
+                    this.pulses = 0;
+                    this.sensorDetectLoop();
+                }).catch(err => {
+                    alert('Camera access denied. Please allow camera access.');
+                    console.error(err);
+                });
+            },
+
+            stopSensor() {
+                this.sensorActive = false;
+                if (this.sensorAnimId) {
+                    cancelAnimationFrame(this.sensorAnimId);
+                    this.sensorAnimId = null;
+                }
+                if (this.el.video.srcObject) {
+                    this.el.video.srcObject.getTracks().forEach(t => t.stop());
+                    this.el.video.srcObject = null;
+                }
+                this.el.sensorStatusBadge.textContent = '⏻ STOPPED';
+                this.el.sensorStatusBadge.className = 'sensor-status-badge';
+                this.el.sensorStartBtn.textContent = 'START';
+                this.el.sensorStartBtn.disabled = false;
+                document.getElementById("addQubit").disabled = false;
+                document.getElementById("removeQubit").disabled = false;
+                this.updateSensorUI('IDLE', false, false);
+                // Reset emulator state to |0⟩ when sensor stops
+                if (this.lastResult) {
+                    this.lastResult.state.setSensorState('IDLE');
+                    this.updateVisuals(this.lastResult.state);
+                }
+            },
+
+            sensorDetectLoop() {
+                if (!this.sensorActive) return;
+                const ctx = this.el.ctx;
+                const canvas = this.el.canvas;
+                const video = this.el.video;
+                if (video.readyState >= 2) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const data = ctx.getImageData(canvas.width / 2 - 20, canvas.height / 2 - 20, 40, 40).data;
+                    const threshold = parseInt(this.el.sens.value);
+                    let rH = 0,
+                        wH = 0,
+                        totalB = 0;
+                    for (let i = 0; i < data.length; i += 4) {
+                        let r = data[i],
+                            g = data[i + 1],
+                            b = data[i + 2];
+                        totalB += (r + g + b) / 3;
+                        if (r > threshold && g < threshold / 1.3) rH++;
+                        if (r > threshold && g > threshold / 1.1 && b > threshold / 1.1) wH++;
+                    }
+                    const avgB = totalB / (data.length / 4);
+                    if (Math.abs(avgB - this.lastBrightness) > 5) this.pulses++;
+                    this.lastBrightness = avgB;
+
+                    if (Date.now() - this.lastTime >= 1000) {
+                        const multiplier = (rH > 8 && wH > 8) ? 42.5 : 22.1;
+                        this.displayHz = Math.floor(this.pulses * multiplier);
+                        const red = rH > 8,
+                            white = wH > 8;
+                        this.sensorDetectedRed = red;
+                        this.sensorDetectedWhite = white;
+                        let state = 'IDLE';
+                        if (red && white) state = '|ψ⟩';
+                        else if (red) state = '|0⟩';
+                        else if (white) state = '|1⟩';
+                        this.sensorState = state;
+                        this.updateSensorUI(state, red, white);
+                        // Sync sensor state to emulator
+                        this.syncSensorToEmulator(state);
+                        this.pulses = 0;
+                        this.lastTime = Date.now();
+                    }
+                    this.drawSpectrometer(this.displayHz, rH > 8, wH > 8);
+                }
+                this.sensorAnimId = requestAnimationFrame(() => this.sensorDetectLoop());
+            },
+
+            drawSpectrometer(hz, hasRed, hasWhite) {
+                const ctx = this.el.specCtx;
+                const w = this.el.specCanvas.width,
+                    h = this.el.specCanvas.height;
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, w, h);
+                this.rWave.shift();
+                this.wWave.shift();
+                const time = Date.now() / 50;
+                const isMixing = hasRed && hasWhite;
+                let rPos = hasRed ? 100 + (Math.sin(time) * (hz * 0.15)) : 120;
+                let wPos = hasWhite ? 40 + (Math.cos(time) * (hz * 0.15)) : 30;
+                if (isMixing) { rPos -= 30;
+                    wPos += 30; }
+                this.rWave.push(rPos);
+                this.wWave.push(wPos);
+
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.strokeStyle = "#ffffff";
+                for (let i = 0; i < 100; i++) ctx.lineTo((w / 100) * i, Math.min(h - 2, Math.max(2, this.wWave[i])));
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeStyle = "#ff4b2b";
+                for (let i = 0; i < 100; i++) ctx.lineTo((w / 100) * i, Math.min(h - 2, Math.max(2, this.rWave[i])));
+                ctx.stroke();
+
+                let rotX = isMixing ? Math.sin(time / 2.5) * 40 : (hasRed ? 25 : (hasWhite ? -25 : 0));
+                let rotY = isMixing ? Math.cos(time / 2.5) * 40 : (hasRed ? 45 : (hasWhite ? -45 : 0));
+                this.el.vectorCircle.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+                let baseRotate = this.displayHz * 0.8;
+                this.el.nMain.style.transform = `rotate(${baseRotate}deg) translateZ(35px)`;
+                this.el.nRed.style.opacity = hasRed ? "1" : "0.05";
+                this.el.nWhite.style.opacity = hasWhite ? "1" : "0.05";
+            },
+
+            updateSensorUI(state, red, white) {
+                const el = this.el;
+                const statusMap = {
+                    '|0⟩': 'GROUND STATE |0⟩',
+                    '|1⟩': 'EXCITED STATE |1⟩',
+                    '|ψ⟩': 'SUPERPOSITION |ψ⟩',
+                    'IDLE': 'VACUUM IDLE'
+                };
+                el.qStatus.textContent = statusMap[state] || 'IDLE';
+
+                const freqMap = {
+                    '|0⟩': '484 THz',
+                    '|1⟩': '790 THz',
+                    '|ψ⟩': 'RED: 484 THz | WHITE: 790 THz',
+                    'IDLE': '0 Hz'
+                };
+                el.hzText.textContent = freqMap[state] || '0 Hz';
+
+                const detectMap = {
+                    '|0⟩': 'Low Frequency Red Active',
+                    '|1⟩': 'High Frequency White Active',
+                    '|ψ⟩': 'Dual Phase Coherence Detected',
+                    'IDLE': 'Scanning for Quantum Gates…'
+                };
+                el.detectText.textContent = detectMap[state] || 'Scanning…';
+
+                const symMap = { '|0⟩': '0', '|1⟩': '1', '|ψ⟩': 'Ψ', 'IDLE': '' };
+                el.qSym.textContent = symMap[state] || '';
+
+                document.querySelectorAll('.truth-table tr').forEach(r => r.classList.remove('active-row'));
+                const showEv = (id) => { const e = document.getElementById(id); if (e) e.style.display = 'inline'; };
+                const hideEv = (id) => { const e = document.getElementById(id); if (e) e.style.display = 'none'; };
+                hideEv('ev-red');
+                hideEv('ev-white');
+                hideEv('ev-super');
+
+                if (state === '|ψ⟩') {
+                    el.rowSuper.classList.add('active-row');
+                    el.fSuper.textContent = '484 & 790';
+                    el.fRed.textContent = '484';
+                    el.fWhite.textContent = '790';
+                    el.fSuper.classList.add('val-changing');
+                    showEv('ev-red');
+                    showEv('ev-white');
+                    showEv('ev-super');
+                } else if (state === '|0⟩') {
+                    el.rowRed.classList.add('active-row');
+                    el.fRed.textContent = '484';
+                    el.fRed.classList.add('val-changing');
+                    el.fWhite.textContent = '0';
+                    el.fSuper.textContent = '0';
+                    showEv('ev-red');
+                } else if (state === '|1⟩') {
+                    el.rowWhite.classList.add('active-row');
+                    el.fWhite.textContent = '790';
+                    el.fWhite.classList.add('val-changing');
+                    el.fRed.textContent = '0';
+                    el.fSuper.textContent = '0';
+                    showEv('ev-white');
+                } else {
+                    el.fRed.textContent = '0';
+                    el.fWhite.textContent = '0';
+                    el.fSuper.textContent = '0';
+                    el.fRed.classList.remove('val-changing');
+                    el.fWhite.classList.remove('val-changing');
+                    el.fSuper.classList.remove('val-changing');
+                }
+            },
+
+            syncSensorToEmulator(state) {
+                // Update the emulator's state to match sensor
+                if (!this.lastResult) {
+                    // Create a dummy simulation result with 1 qubit
+                    this.lastResult = { state: new QuantumState(1) };
+                }
+                const currentState = this.lastResult.state;
+                if (currentState.numQubits !== 1) {
+                    // Force 1 qubit (should already be the case)
+                    const newState = new QuantumState(1);
+                    newState.setSensorState(state);
+                    this.lastResult.state = newState;
+                } else {
+                    currentState.setSensorState(state);
+                }
+                this.collapsedState = null;
+                this.updateVisuals(this.lastResult.state);
+                this.setStatus(`Sensor → ${state}`);
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            app.init();
+        });
+    </script>
+
+</body>
+
+</html>
